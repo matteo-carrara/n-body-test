@@ -10,10 +10,10 @@ G = 6.6743e-11  # N * m^2 / kg^2
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
-screen_width = 1280
+screen_width = 1600
 screen_height = 900
 
-TIMESTEP = 0.01
+TIMESTEP = 0.0064
 
 
 def calculate_collision_velocities(
@@ -96,8 +96,8 @@ class Body:
     coll_distance = {}  # first the index, then the distance
     skip = False
     mass = 0
-    vx = 60
-    vy = 60
+    vx = 350
+    vy = 350
     border = False
     border_cnt = 0
 
@@ -140,7 +140,7 @@ class Body:
 
         if self.border_cnt > 0:
             self.border_cnt -= 1
-            print("x,y", self.x, self.y)
+            ##print("x,y", self.x, self.y)
             # input()
 
     def skip_update(self):
@@ -158,7 +158,7 @@ class Body:
         b = self
 
         if len(self.coll_distance.keys()) > 0:
-            # print("WARNING THIS OBJECT COLLIDED")
+            # ##print("WARNING THIS OBJECT COLLIDED")
             pass
 
         self.old_x = self.x
@@ -168,28 +168,28 @@ class Body:
         b.y += b.vy * TIMESTEP
 
         if b.x > screen_width - b.rad:
-            print("X COLLISION", b.x)
+            ##print("X COLLISION", b.x)
             b.x = (screen_width - b.rad) - (b.x - (screen_width - b.rad))
             b.vx = -b.vx
 
             # input()
             self.look_result(3)
         if b.x < b.rad:
-            print("X COLLISION", b.x)
+            ##print("X COLLISION", b.x)
             b.x = b.rad + abs(b.x - b.rad)
             b.vx = -b.vx
 
             # input()
             self.look_result(3)
         if b.y > screen_height - b.rad:
-            print("Y COLLISION", b.y)
+            ##print("Y COLLISION", b.y)
             b.y = (screen_height - b.rad) - (b.y - (screen_height - b.rad))
             b.vy = -b.vy
 
             # input()
             self.look_result(3)
         if b.y < b.rad:
-            print("Y COLLISION", b.y)
+            ##print("Y COLLISION", b.y)
             b.y = b.rad + (b.rad - b.y)
             b.vy = -b.vy
 
@@ -223,25 +223,25 @@ def do_not_overlap(p1, p2, r1, r2):
 
 
 def create_bodies(num):
-    min_radius = 30
-    max_radius = 120
+    min_radius = 10
+    max_radius = 30
     minmass = int(1e15)
     maxmass = int(1e16)
     ret = []
 
     for i in range(num):
-        print("Generating object", i)
+        ##print("Generating object", i)
 
         found = False
         c = random.randrange(64, 256)
         color = (
-            c,
-            c,
-            c,
+            random.randrange(64, 256),
+            random.randrange(64, 256),
+            random.randrange(64, 256),
         )
 
         while not found:
-            print("Generating...")
+            ##print("Generating...")
 
             rad = random.randrange(min_radius, max_radius + 1)
             test_x = random.randrange(rad, screen_width + 1)
@@ -249,9 +249,9 @@ def create_bodies(num):
 
             found = True
             i = 0
-            print("Checking collisions")
+            #print("Checking collisions")
             for other in ret:
-                print("Check against #", i)
+                #print("Check against #", i)
                 good = do_not_overlap(
                     (other.x, other.y), (test_x, test_y), other.rad, rad
                 )
@@ -259,17 +259,18 @@ def create_bodies(num):
 
                 if not good:
                     found = False
-                    print("\n\n!!!!!!!!!!!!!!!!! Overlap detected\n\n")
+                    #print("\n\n!!!!!!!!!!!!!!!!! Overlap detected\n\n")
                     break
                 else:
-                    print("Is good")
+                    #print("Is good")
+                    pass
 
-        print("Found, appending result")
-        print("Obj", rad, test_x, test_y)
+        #print("Found, appending result")
+        #print("Obj", rad, test_x, test_y)
         ret.append(Body(rad, test_x, test_y, color))
         ret[-1].mass = minmass + ((maxmass - minmass) * rad / max_radius)
 
-        print("Drawing screen")
+        #print("Drawing screen")
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -280,25 +281,25 @@ def create_bodies(num):
 
         pygame.display.flip()
 
-    print("Leaving generation...")
+    #print("Leaving generation...")
     # input()
     return ret
 
 
 def calc_forces(b):
     for i in range(len(b)):
-        print("\n\nUsing elem", i)
-        print("Mass", b[i].mass, "Center", b[i].x, b[i].y)
+        #print("\n\nUsing elem", i)
+        #print("Mass", b[i].mass, "Center", b[i].x, b[i].y)
 
         for k in range(len(b)):
             if k == i:
                 continue
 
-            print("Against", k)
-            print("Mass", b[k].mass, "Center", b[k].x, b[k].y)
+            #print("Against", k)
+            #print("Mass", b[k].mass, "Center", b[k].x, b[k].y)
 
             d = point_dist(b[i].x, b[i].y, b[k].x, b[k].y)
-            print("Distance", d)
+            #print("Distance", d)
 
             acc = gravitational_acceleration(
                 b[i].mass,
@@ -307,14 +308,14 @@ def calc_forces(b):
                 np.array([b[k].x, b[k].y]),
                 G,
             )
-            print("Acceleration of body", i, acc)
+            #print("Acceleration of body", i, acc)
 
             b[i].vx += acc[0] * TIMESTEP
             b[i].vy += acc[1] * TIMESTEP
 
-            print("New velocity", b[i].vx, b[i].vy)
+            #print("New velocity", b[i].vx, b[i].vy)
 
-    print("updating positions for timestep")
+    #print("updating positions for timestep")
     for elem in b:
         elem.update_pos()
 
@@ -379,26 +380,28 @@ def univ_collision(b, ind_fixed):
             if not do_not_overlap(
                 (b[i].x, b[i].y), (b[k].x, b[k].y), b[i].rad, b[k].rad
             ):
-                print("Collided")
+                #print("Collided")
                 
-                print("Centering objects")
-                print("Before", b[i].x, b[i].y, b[k].x, b[k].y)
+                #print("Centering objects")
+                #print("Before", b[i].x, b[i].y, b[k].x, b[k].y)
                 b[i].x, b[i].y, b[k].x, b[k].y = separate_circles(b[i].x, b[i].y, b[i].rad, b[k].x, b[k].y, b[k].rad)
-                print("After", b[i].x, b[i].y, b[k].x, b[k].y)
+                #print("After", b[i].x, b[i].y, b[k].x, b[k].y)
                 #input()
                 
                 if sorted([i, k]) in ind_fixed:
-                    print("Already fixed")
-                    print("Old distance", b[i].coll_distance[k])
+                    #print("Already fixed")
+                    #print("Old distance", b[i].coll_distance[k])
                     nd = point_dist(b[i].x, b[i].y, b[k].x, b[k].y)
-                    print("New distance", nd)
+                    #print("New distance", nd)
 
                     if nd < b[i].coll_distance[k]:
-                        print("The object got closer, reverting")
+                        #print("The object got closer, reverting")
                         # b[i].step_back()
                         # b[k].step_back()
+                        pass
                     else:
-                        print("The objects are moving away")
+                        #print("The objects are moving away")
+                        pass
 
                     # input()
                     still_broken.append(sorted([i, k]))
@@ -412,7 +415,7 @@ def univ_collision(b, ind_fixed):
                     b[k].vx = r[2]
                     b[k].vy = r[3]
                     ind_fixed.append(sorted([i, k]))
-                    print("New velocities", r)
+                    #print("New velocities", r)
                     tmp_dist = point_dist(b[i].x, b[i].y, b[k].x, b[k].y)
                     b[i].coll_distance[k] = tmp_dist
                     b[k].coll_distance[i] = tmp_dist
@@ -425,14 +428,15 @@ def univ_collision(b, ind_fixed):
             if not (ind_fixed[i] in still_broken):
                 to_delete.append(i)
     except:
-        print(ind_fixed)
+        #print(ind_fixed)
         exit(1)
 
     tmplist = [a for b, a in enumerate(ind_fixed) if b not in to_delete]
 
     if found > 0:
-        print("Found collisions:", found)
+        #print("Found collisions:", found)
         # input()
+        pass
 
     return tmplist
 
@@ -464,7 +468,7 @@ while running:
     pygame.display.flip()
 
     clock.tick(60)
-    print("Calculating forces...")
+    #print("Calculating forces...")
     calc_forces(b)
     tmp = univ_collision(b, tmp)
     # input()
