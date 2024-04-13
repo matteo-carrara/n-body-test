@@ -1,8 +1,11 @@
 import pygame
+import random
+
 
 class Body:
   def __init__(self, radius, x, y) -> None:
     self.radius = radius
+    self.rad = radius
 
     if(x < radius):
       x = radius
@@ -33,6 +36,38 @@ class Body:
     if b.y + b.radius > screen_height or b.y - b.radius < 0:
         b.y -= 1
 
+
+
+def create_bodies(num):
+  ret = []
+
+  for i in range (num):
+    found = False
+
+    while (not found):
+        rad = random.randrange(5, 31)
+        test_x = random.randrange(rad, screen_width+1)
+        test_y = random.randrange(rad, screen_height+1)
+
+        for other in ret:
+            if ((other.x-other.rad) < (test_x+rad)) or ((other.x+other.rad) > (test_x - rad)):
+                found = False
+                print("Overlap detected")
+                break
+
+            if ((other.y-other.rad) < (test_y+rad)) or ((other.y+other.rad) > (test_y - rad)):
+                found = False
+                print("Overlap detected")
+                break
+
+        found = True
+        ret.append(Body(rad, test_x, test_y))
+
+  return ret
+
+
+
+
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -45,7 +80,8 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 
 clock = pygame.time.Clock()
 
-b = Body(10, 10000, 100000)
+b = create_bodies(34)
+
 
 running = True
 i = 0
@@ -57,14 +93,13 @@ while running:
 
   screen.fill(BLACK)
 
-  b.draw()
-  b.anim()
+  for elem in b:
+     elem.draw()
+     elem.anim()
 
 
   pygame.display.flip()
 
   clock.tick(60)
-  i+=1
-  print(i)  
 
 pygame.quit()
