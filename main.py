@@ -96,10 +96,19 @@ class Body:
     coll_distance = {}  # first the index, then the distance
     skip = False
     mass = 0
-    vx = 350
-    vy = 350
+    vx = 0
+    vy = 0
     border = False
     border_cnt = 0
+    colliding = 0
+
+    def accel(self, ax, ay):
+        if (self.colliding == 0):
+            self.vx += ax
+            self.vy += ay
+        else:
+            #print("Colliding, skipping")
+            pass
 
     def __init__(self, radius, x, y, color=WHITE) -> None:
         self.radius = radius
@@ -127,16 +136,14 @@ class Body:
     def draw(self):
         pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
         text = (
-            "m "
-            + f"{self.mass:.0e}"
-            + " vx"
+            "vx"
             + f"{self.vx:.1f}"
             + " vy"
             + f"{self.vy:.1f}"
         )
 
-        # text_surface = font.render(text, True, RED)
-        # screen.blit(text_surface, (self.x, self.y))
+        text_surface = font.render(text, True, RED)
+        screen.blit(text_surface, (self.x, self.y))
 
         if self.border_cnt > 0:
             self.border_cnt -= 1
@@ -223,8 +230,8 @@ def do_not_overlap(p1, p2, r1, r2):
 
 
 def create_bodies(num):
-    min_radius = 10
-    max_radius = 30
+    min_radius = 30
+    max_radius = 80
     minmass = int(1e15)
     maxmass = int(1e16)
     ret = []
@@ -310,8 +317,9 @@ def calc_forces(b):
             )
             #print("Acceleration of body", i, acc)
 
-            b[i].vx += acc[0] * TIMESTEP
-            b[i].vy += acc[1] * TIMESTEP
+
+            
+            b[i].accel(acc[0] * TIMESTEP, acc[1] * TIMESTEP)
 
             #print("New velocity", b[i].vx, b[i].vy)
 
@@ -373,6 +381,9 @@ def univ_collision(b, ind_fixed):
     still_broken = []
 
     for i in range(len(b)):
+        
+        reset_coll = True
+        
         for k in range(len(b)):
             if k == i:
                 continue
@@ -381,6 +392,8 @@ def univ_collision(b, ind_fixed):
                 (b[i].x, b[i].y), (b[k].x, b[k].y), b[i].rad, b[k].rad
             ):
                 #print("Collided")
+                reset_coll = False
+                b[i].colliding +=1
                 
                 #print("Centering objects")
                 #print("Before", b[i].x, b[i].y, b[k].x, b[k].y)
@@ -418,9 +431,10 @@ def univ_collision(b, ind_fixed):
                     #print("New velocities", r)
                     tmp_dist = point_dist(b[i].x, b[i].y, b[k].x, b[k].y)
                     b[i].coll_distance[k] = tmp_dist
-                    b[k].coll_distance[i] = tmp_dist
-                    
+                    b[k].coll_distance[i] = tmp_dist   
 
+        if(reset_coll):
+            b[i].colliding = 0
 
     to_delete = []
     try:
