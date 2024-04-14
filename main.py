@@ -19,7 +19,9 @@ screen_width = 1600
 screen_height = 900
 
 TIMESTEP = 0.0064
+BODIES_GEN = 5
 
+b = []
 
 def calculate_collision_velocities(
     mass1, mass2, velocity1x, velocity1y, velocity2x, velocity2y
@@ -489,7 +491,8 @@ global control_window
 def control_thread():
     control_window = tk.Tk()
     control_window.title("Pygame Controls")
-    control_window.geometry("300x400")
+    tk_width=600
+    control_window.geometry(str(tk_width)+"x400")
     
     def pause_sim():
         control_queue.put("paused")
@@ -504,16 +507,62 @@ def control_thread():
     button2 = tk.Button(control_window, text=">", width=5, height=2, font=("Arial", 16), bg="blue", fg="white", command=resume_sim)
     button2.grid(row=0, column=2)  # Place the button at row 0, column 1
 
+
+    data = ["X", "Y", "vx", "vy", "m"]
+    
+    
+    rows = BODIES_GEN+1
+    cols = len(data)
+    print("cols", cols)
+    ideal_cell_width = ((tk_width + 100) // cols) // 10
+    print(ideal_cell_width)
+    
+    entries = []
+    for i in range(rows):
+        tmp = []
+        
+        for j in range(cols):
+            entry = tk.Entry(control_window, width=ideal_cell_width)
+            entry.grid(row=i+1, column=j)
+            entry.insert(0, "")
+            tmp.append(entry)
+            # Bind function to update data on edit
+            # entry.bind("<Return>", lambda event, row=i, col=j: update_cell(row, col, entry.get()))
+        
+        entries.append(tmp)
+            
+    
+    
+    for i in range(cols):
+        entries[0][i].insert(0, data[i])
+        
+    # Function to update cell value
+    def update_cell(row, col, value):
+        entries[row][col].delete(0, tk.END)
+        entries[row][col].insert(0, value)
+        
+    def update_table():
+        #print("update table")
+        
+        row = 1
+        for body in b:
+            tmp = [round(body.x, 0), round(body.y,0), round(body.vx,1), round(body.vy,1), "{:.1e}".format(body.mass)]
+            for col in range(len(tmp)):
+                update_cell(row, col, tmp[col])
+            row +=1
+            
+
+
+
+
+
+
+
+
     while not tk_terminate.is_set():
         #print("in window")
-        tk_terminate.wait(timeout=0.1)
-        try:
-            # Check for control updates from the main thread
-            new_value = control_queue.get(timeout=0.1)  # Non-blocking receive
-            slider.set(new_value)  # Update slider value based on received data
-            
-        except queue.Empty:
-            pass  # No data received in the timeout period
+        tk_terminate.wait(timeout=0.0)
+        update_table()
 
         control_window.update()
     
@@ -547,7 +596,7 @@ signal.signal(signal.SIGINT, pygame_termination_handler)
 
 
 
-b = create_bodies(5)
+b = create_bodies(BODIES_GEN)
 
 
 running = True
