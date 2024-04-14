@@ -19,7 +19,7 @@ screen_width = 1600
 screen_height = 900
 
 TIMESTEP = 0.0064
-BODIES_GEN = 5
+BODIES_GEN = 2
 
 b = []
 
@@ -498,7 +498,10 @@ def control_thread():
     control_window.geometry(str(tk_width)+"x400")
     
     def pause_sim():
-        SIM_PAUSED.acquire()
+        if not SIM_PAUSED.acquire(blocking=False):
+            #print("Lock is currently busy, skipping acquisition")
+            pass
+        
         control_queue.put("paused")
         #print("Paused = ", SIM_PAUSED)
         
@@ -536,8 +539,11 @@ def control_thread():
             b[row-1].vy = float(newdata)
         elif(col == 4):
             b[row-1].mass = float(newdata)
+        elif(col == 5):
+            b[row-1].radius = float(newdata)
+        
 
-    data = ["X", "Y", "vx", "vy", "m"]
+    data = ["X", "Y", "vx", "vy", "m", "rad"]
     
     
     rows = BODIES_GEN+1
@@ -578,7 +584,7 @@ def control_thread():
         
         row = 1
         for body in b:
-            tmp = [round(body.x, 0), round(body.y,0), round(body.vx,1), round(body.vy,1), "{:.1e}".format(body.mass)]
+            tmp = [round(body.x, 0), round(body.y,0), round(body.vx,1), round(body.vy,1), "{:.1e}".format(body.mass), round(body.radius, 1)]
             for col in range(len(tmp)):
                 update_cell(row, col, tmp[col])
             row +=1
