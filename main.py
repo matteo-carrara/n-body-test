@@ -488,17 +488,30 @@ def univ_collision(b, ind_fixed):
 control_queue = queue.Queue()
 
 global control_window
+
+
 def control_thread():
+    SIM_PAUSED = threading.Lock()
     control_window = tk.Tk()
     control_window.title("Pygame Controls")
     tk_width=600
     control_window.geometry(str(tk_width)+"x400")
     
     def pause_sim():
+        SIM_PAUSED.acquire()
         control_queue.put("paused")
+        #print("Paused = ", SIM_PAUSED)
+        
         
     def resume_sim():
+        try:
+            SIM_PAUSED.release()
+        except RuntimeError:
+            #print("Already unlocked")
+            pass
         control_queue.put("resume")
+        #print("Paused = ", SIM_PAUSED)
+        
 
     
     button1 = tk.Button(control_window, text="||", width=5, height=2, font=("Arial", 16), bg="blue", fg="white", command=pause_sim)
@@ -507,6 +520,22 @@ def control_thread():
     button2 = tk.Button(control_window, text=">", width=5, height=2, font=("Arial", 16), bg="blue", fg="white", command=resume_sim)
     button2.grid(row=0, column=2)  # Place the button at row 0, column 1
 
+    entries = []
+    
+    def univ_modified(row, col):
+        newdata = entries[row][col].get()
+        print("Modified", row, col, newdata)
+        
+        if(col == 0):
+            b[row-1].x = float(newdata)
+        elif(col == 1):
+            b[row-1].y = float(newdata)
+        elif(col == 2):
+            b[row-1].vx = float(newdata)
+        elif(col == 3):
+            b[row-1].vy = float(newdata)
+        elif(col == 4):
+            b[row-1].mass = float(newdata)
 
     data = ["X", "Y", "vx", "vy", "m"]
     
@@ -517,17 +546,19 @@ def control_thread():
     ideal_cell_width = ((tk_width + 100) // cols) // 10
     print(ideal_cell_width)
     
-    entries = []
+    
     for i in range(rows):
         tmp = []
         
         for j in range(cols):
             entry = tk.Entry(control_window, width=ideal_cell_width)
             entry.grid(row=i+1, column=j)
+            entry.config(state="normal")
             entry.insert(0, "")
             tmp.append(entry)
             # Bind function to update data on edit
-            # entry.bind("<Return>", lambda event, row=i, col=j: update_cell(row, col, entry.get()))
+            if(i>0):
+                entry.bind("<Return>", lambda event, row=i, col=j: univ_modified(row, col))
         
         entries.append(tmp)
             
@@ -543,6 +574,7 @@ def control_thread():
         
     def update_table():
         #print("update table")
+        #print("Paused = ", SIM_PAUSED)
         
         row = 1
         for body in b:
@@ -550,19 +582,25 @@ def control_thread():
             for col in range(len(tmp)):
                 update_cell(row, col, tmp[col])
             row +=1
-            
-
-
-
-
-
-
-
 
     while not tk_terminate.is_set():
-        #print("in window")
         tk_terminate.wait(timeout=0.0)
-        update_table()
+        
+        
+
+        if not SIM_PAUSED.acquire(blocking=False):
+            #print("Lock is currently busy, skipping acquisition")
+            pass
+        else:
+            #print("Lock acquired, updating table")
+            update_table()
+            SIM_PAUSED.release()
+            #print("Lock released table updated")
+
+    
+        
+        
+        
 
         control_window.update()
     
