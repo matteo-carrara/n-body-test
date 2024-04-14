@@ -483,29 +483,29 @@ def univ_collision(b, ind_fixed):
 
     return tmplist
 
+control_queue = queue.Queue()
+
 global control_window
 def control_thread():
     control_window = tk.Tk()
     control_window.title("Pygame Controls")
-
-    # Label for slider value
-    slider_value_label = tk.Label(control_window, text="Slider Value: 0")
-    slider_value_label.pack()
-
-    # Slider to control a Pygame element (example)
-    def update_slider_value(value):
-        slider_value_label.config(text=f"Slider Value: {value}")
-        # In your main thread, receive the value from the queue and update the Pygame element accordingly
-
-    slider = tk.Scale(control_window, from_=0, to=100, orient=tk.HORIZONTAL, command=update_slider_value)
-    slider.pack()
-
-
+    control_window.geometry("300x400")
+    
+    def pause_sim():
+        control_queue.put("paused")
+        
+    def resume_sim():
+        control_queue.put("resume")
 
     
+    button1 = tk.Button(control_window, text="||", width=5, height=2, font=("Arial", 16), bg="blue", fg="white", command=pause_sim)
+    button1.grid(row=0, column=1)  # Place the button at row 0, column 1
+    
+    button2 = tk.Button(control_window, text=">", width=5, height=2, font=("Arial", 16), bg="blue", fg="white", command=resume_sim)
+    button2.grid(row=0, column=2)  # Place the button at row 0, column 1
 
     while not tk_terminate.is_set():
-        print("in window")
+        #print("in window")
         tk_terminate.wait(timeout=0.1)
         try:
             # Check for control updates from the main thread
@@ -517,9 +517,9 @@ def control_thread():
 
         control_window.update()
     
-    print("exited")
+
     control_window.destroy()
-    print("destroyed")
+
     
 
     control_window.mainloop()
@@ -531,7 +531,7 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 32)
 
-control_queue = queue.Queue()
+
 tk_terminate = threading.Event() 
 ct = threading.Thread(target=control_thread)
 ct.start()
@@ -555,6 +555,7 @@ i = 0
 tmp = []
 
 masses = [x.mass for x in b]
+new_calc = True
 while not pygame_terminate:
 
     for event in pygame.event.get():
@@ -562,29 +563,35 @@ while not pygame_terminate:
             running = False
             pygame_terminate = True
 
-    # Example: Update a slider value based on user input
-    #slider_value = ...  # Get the current slider value from user input
-    #control_queue.put(slider_value)
+
 
     screen.fill(BLACK)
 
     for elem in b:
         elem.draw()
-        # elem.anim()
 
     pygame.display.flip()
 
     clock.tick(60)
-    #print("Calculating forces...")
-    calc_forces(b)
-    tmp = univ_collision(b, tmp)
+
+
     
-    vel = [[x.vx, x.vy] for x in b]
-    ki = calculate_kinetic_energy(masses, vel)
-    s = sum (ki)
-    #print("Total energy", round(s, 2))
+    try:
+        item = control_queue.get(block=False)
+        if(item == "paused"):
+            new_calc = False
+            print("Pausing")
+        elif(item == "resume"):
+            new_calc = True
+            print("Resuming")
+        # Process the item:
+    except queue.Empty:
+        # Handle the case where the queue is empty (optional)
+        pass
     
-    
-    #input()
+    if(new_calc):
+        calc_forces(b)
+        tmp = univ_collision(b, tmp)
+
 
 pygame.quit()
