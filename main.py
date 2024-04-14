@@ -3,6 +3,11 @@ import random
 import time
 import numpy as np
 import math
+import queue
+import tkinter as tk
+import threading
+import signal
+
 
 # Define the gravitational constant
 G = 6.6743e-11  # N * m^2 / kg^2
@@ -91,6 +96,30 @@ def gravitational_acceleration(
 
     return acceleration
 
+def calculate_kinetic_energy(masses, velocities):
+  """
+  This function calculates the kinetic energy of each flying mass in a 2D space.
+
+  Args:
+      masses (list): A list containing the mass of each flying object.
+      velocities (list): A list containing the velocity vector (2D) for each object (e.g., [vx, vy]).
+
+  Returns:
+      list: A list containing the kinetic energy of each flying object.
+  """
+
+  if len(masses) != len(velocities):
+    raise ValueError("Lengths of masses and velocities lists must be equal.")
+
+  kinetic_energies = []
+  for mass, velocity in zip(masses, velocities):
+    # Calculate magnitude squared of velocity vector (2D)
+    magnitude_squared = sum(v**2 for v in velocity)
+    # Calculate kinetic energy for each mass
+    kinetic_energy = 0.5 * mass * magnitude_squared
+    kinetic_energies.append(kinetic_energy)
+
+  return kinetic_energies
 
 class Body:
     coll_distance = {}  # first the index, then the distance
@@ -230,8 +259,8 @@ def do_not_overlap(p1, p2, r1, r2):
 
 
 def create_bodies(num):
-    min_radius = 30
-    max_radius = 80
+    min_radius = 15
+    max_radius = 30
     minmass = int(1e15)
     maxmass = int(1e16)
     ret = []
@@ -454,11 +483,68 @@ def univ_collision(b, ind_fixed):
 
     return tmplist
 
+global control_window
+def control_thread():
+    control_window = tk.Tk()
+    control_window.title("Pygame Controls")
 
+    # Label for slider value
+    slider_value_label = tk.Label(control_window, text="Slider Value: 0")
+    slider_value_label.pack()
+
+    # Slider to control a Pygame element (example)
+    def update_slider_value(value):
+        slider_value_label.config(text=f"Slider Value: {value}")
+        # In your main thread, receive the value from the queue and update the Pygame element accordingly
+
+    slider = tk.Scale(control_window, from_=0, to=100, orient=tk.HORIZONTAL, command=update_slider_value)
+    slider.pack()
+
+
+
+    
+
+    while not tk_terminate.is_set():
+        print("in window")
+        tk_terminate.wait(timeout=0.1)
+        try:
+            # Check for control updates from the main thread
+            new_value = control_queue.get(timeout=0.1)  # Non-blocking receive
+            slider.set(new_value)  # Update slider value based on received data
+            
+        except queue.Empty:
+            pass  # No data received in the timeout period
+
+        control_window.update()
+    
+    print("exited")
+    control_window.destroy()
+    print("destroyed")
+    
+
+    control_window.mainloop()
+
+
+pygame_terminate = False 
 pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 32)
+
+control_queue = queue.Queue()
+tk_terminate = threading.Event() 
+ct = threading.Thread(target=control_thread)
+ct.start()
+
+
+def pygame_termination_handler(sig, frame):
+    global tk_terminate, pygame_terminate
+    tk_terminate.set()  # Assuming you have a threading.Event object
+    pygame_terminate = True  # Flag for the Pygame thread
+    print("Setting tk_terminate", tk_terminate.is_set())
+    
+signal.signal(signal.SIGINT, pygame_termination_handler)
+
 
 
 b = create_bodies(5)
@@ -467,11 +553,18 @@ b = create_bodies(5)
 running = True
 i = 0
 tmp = []
-while running:
+
+masses = [x.mass for x in b]
+while not pygame_terminate:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+            pygame_terminate = True
+
+    # Example: Update a slider value based on user input
+    #slider_value = ...  # Get the current slider value from user input
+    #control_queue.put(slider_value)
 
     screen.fill(BLACK)
 
@@ -485,6 +578,13 @@ while running:
     #print("Calculating forces...")
     calc_forces(b)
     tmp = univ_collision(b, tmp)
-    # input()
+    
+    vel = [[x.vx, x.vy] for x in b]
+    ki = calculate_kinetic_energy(masses, vel)
+    s = sum (ki)
+    #print("Total energy", round(s, 2))
+    
+    
+    #input()
 
 pygame.quit()
