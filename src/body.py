@@ -1,5 +1,13 @@
 from globals import *
 
+def point_dist(x1, y1, x2, y2):
+    # Calculate the squared difference in x and y coordinates
+    delta_x = (x2 - x1) ** 2
+    delta_y = (y2 - y1) ** 2
+
+    # Apply the Pythagorean theorem and return the distance
+    distance = math.sqrt(delta_x + delta_y)
+    return distance
 
 class CircleHandle:
     def __init__(self):
@@ -87,9 +95,18 @@ class Body:
     def look_result(self, times):
         self.border_cnt = times
 
+
     def draw(self):
         pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
-        #self.handle.draw(screen, (self.x, self.y), 100, 200, 10, WHITE, WHITE, 2)
+        
+        for (x, y) in self.circle_history:
+            trail_c = self.color
+            
+            if(point_dist(x, y, self.x, self.y) < self.radius):
+                trail_c = (70, 70, 70)
+                
+            pygame.draw.circle(screen, trail_c, (x, y), 1)
+        
         text = (
             "vx"
             + f"{self.vx:.1f}"
@@ -97,8 +114,7 @@ class Body:
             + f"{self.vy:.1f}"
         )
         
-        for (x, y) in self.circle_history:
-            pygame.draw.circle(screen, RED, (x, y), 1)
+
 
         text_surface = font.render(text, True, RED)
         screen.blit(text_surface, (self.x, self.y))
@@ -129,7 +145,9 @@ class Body:
         self.old_x = self.x
         self.old_y = self.y
 
-        self.circle_history.append((self.x, self.y))
+        mypos = (self.x, self.y)
+        #print("center", mypos, "opposite", opposite)
+        self.circle_history.append(mypos)
         
         b.x += b.vx * TIMESTEP
         b.y += b.vy * TIMESTEP

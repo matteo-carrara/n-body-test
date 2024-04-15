@@ -1,5 +1,5 @@
 from globals import *
-
+import func
 
 
 

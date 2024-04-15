@@ -131,10 +131,9 @@ def create_bodies(num):
     ret = []
 
     for i in range(num):
-        ##print("Generating object", i)
-
         found = False
         c = random.randrange(64, 256)
+        
         color = (
             random.randrange(64, 256),
             random.randrange(64, 256),
@@ -142,48 +141,22 @@ def create_bodies(num):
         )
 
         while not found:
-            ##print("Generating...")
-
             rad = random.randrange(min_radius, max_radius + 1)
             test_x = random.randrange(rad, screen_width + 1)
             test_y = random.randrange(rad, screen_height + 1)
 
             found = True
-            i = 0
-            #print("Checking collisions")
+            
             for other in ret:
-                #print("Check against #", i)
-                good = do_not_overlap(
-                    (other.x, other.y), (test_x, test_y), other.rad, rad
-                )
-                i += 1
+                good = do_not_overlap((other.x, other.y), (test_x, test_y), other.rad, rad)
 
                 if not good:
                     found = False
-                    #print("\n\n!!!!!!!!!!!!!!!!! Overlap detected\n\n")
                     break
-                else:
-                    #print("Is good")
-                    pass
-
-        #print("Found, appending result")
-        #print("Obj", rad, test_x, test_y)
+            
         ret.append(Body(rad, test_x, test_y, color))
         ret[-1].mass = minmass + ((maxmass - minmass) * rad / max_radius)
 
-        #print("Drawing screen")
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-        screen.fill(BLACK)
-        for b in ret:
-            b.draw()
-
-        pygame.display.flip()
-
-    #print("Leaving generation...")
-    # input()
     return ret
 
 

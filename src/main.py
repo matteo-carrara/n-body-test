@@ -26,6 +26,7 @@ def mainloop():
     b = create_bodies(BODIES_GEN)
     
     for i in range(len(b)):
+        b[i].clear_trajectory()
         shared_list.add(b[i])
 
     ct = threading.Thread(target=control_thread, args=(shared_list,))
@@ -60,12 +61,6 @@ def mainloop():
                 
                 
                 if(elem_clicked):
-                    
-                    
-                    
-                    #print("USING ACC = ", acc)
-                    shared_list.get(elem_idx).clear_trajectory()
-                    
                     shared_list.get(elem_idx).vx = 0
                     shared_list.get(elem_idx).vy = 0
                     
@@ -75,6 +70,8 @@ def mainloop():
                     acc = [k * 2 for k in get_drag_acceleration(mouse_data, 3000)]
                     
                     shared_list.get(elem_idx).accel(acc[0]*TIMESTEP, acc[1]*TIMESTEP)
+                    
+                    shared_list.get(elem_idx).clear_trajectory()
                 
                     
                 mouse_data = []
