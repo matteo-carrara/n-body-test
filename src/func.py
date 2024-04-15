@@ -1,27 +1,4 @@
-import pygame
-import random
-import time
-import numpy as np
-import math
-import queue
-import tkinter as tk
-import threading
-import signal
-
-
-# Define the gravitational constant
-G = 6.6743e-11  # N * m^2 / kg^2
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-screen_width = 1600
-screen_height = 900
-
-TIMESTEP = 0.0064
-BODIES_GEN = 2
-
-b = []
+from globals import *
 
 def calculate_collision_velocities(
     mass1, mass2, velocity1x, velocity1y, velocity2x, velocity2y
@@ -98,6 +75,7 @@ def gravitational_acceleration(
 
     return acceleration
 
+
 def calculate_kinetic_energy(masses, velocities):
   """
   This function calculates the kinetic energy of each flying mass in a 2D space.
@@ -122,6 +100,7 @@ def calculate_kinetic_energy(masses, velocities):
     kinetic_energies.append(kinetic_energy)
 
   return kinetic_energies
+
 
 class Body:
     coll_distance = {}  # first the index, then the distance
@@ -406,6 +385,7 @@ def separate_circles(c1x, c1y, r1, c2x, c2y, r2):
 
   return new_c1x, new_c1y, new_c2x, new_c2y
 
+
 def univ_collision(b, ind_fixed):
     found = 0
 
@@ -484,10 +464,6 @@ def univ_collision(b, ind_fixed):
         pass
 
     return tmplist
-
-control_queue = queue.Queue()
-
-global control_window
 
 
 def control_thread():
@@ -618,73 +594,70 @@ def control_thread():
     control_window.mainloop()
 
 
-pygame_terminate = False 
-pygame.init()
-screen = pygame.display.set_mode((screen_width, screen_height))
-clock = pygame.time.Clock()
-font = pygame.font.Font(None, 32)
-
-
-tk_terminate = threading.Event() 
-ct = threading.Thread(target=control_thread)
-ct.start()
-
-
-def pygame_termination_handler(sig, frame):
-    global tk_terminate, pygame_terminate
-    tk_terminate.set()  # Assuming you have a threading.Event object
-    pygame_terminate = True  # Flag for the Pygame thread
-    print("Setting tk_terminate", tk_terminate.is_set())
-    
-signal.signal(signal.SIGINT, pygame_termination_handler)
-
-
-
-b = create_bodies(BODIES_GEN)
-
-
-running = True
-i = 0
-tmp = []
-
-masses = [x.mass for x in b]
-new_calc = True
-while not pygame_terminate:
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-            pygame_terminate = True
-
-
-
-    screen.fill(BLACK)
-
-    for elem in b:
-        elem.draw()
-
-    pygame.display.flip()
-
-    clock.tick(60)
-
+def mainloop():
+    clock = pygame.time.Clock()
+    ct = threading.Thread(target=control_thread)
+    ct.start()
 
     
-    try:
-        item = control_queue.get(block=False)
-        if(item == "paused"):
-            new_calc = False
-            print("Pausing")
-        elif(item == "resume"):
-            new_calc = True
-            print("Resuming")
-        # Process the item:
-    except queue.Empty:
-        # Handle the case where the queue is empty (optional)
-        pass
     
-    if(new_calc):
-        calc_forces(b)
-        tmp = univ_collision(b, tmp)
+    def pygame_termination_handler(sig, frame):
+        global tk_terminate, pygame_terminate
+        tk_terminate.set()  # Assuming you have a threading.Event object
+        pygame_terminate = True  # Flag for the Pygame thread
+        print("Setting tk_terminate", tk_terminate.is_set())
+        
+    signal.signal(signal.SIGINT, pygame_termination_handler)
 
 
-pygame.quit()
+    global b
+    b = create_bodies(BODIES_GEN)
+
+
+    running = True
+    i = 0
+    tmp = []
+
+    masses = [x.mass for x in b]
+    new_calc = True
+
+    global pygame_terminate
+    while not pygame_terminate:
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                pygame_terminate = True
+
+
+
+        screen.fill(BLACK)
+
+        for elem in b:
+            elem.draw()
+
+        pygame.display.flip()
+
+        clock.tick(60)
+
+
+        
+        try:
+            item = control_queue.get(block=False)
+            if(item == "paused"):
+                new_calc = False
+                print("Pausing")
+            elif(item == "resume"):
+                new_calc = True
+                print("Resuming")
+            # Process the item:
+        except queue.Empty:
+            # Handle the case where the queue is empty (optional)
+            pass
+        
+        if(new_calc):
+            calc_forces(b)
+            tmp = univ_collision(b, tmp)
+
+
+    pygame.quit()
