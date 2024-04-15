@@ -55,8 +55,26 @@ class Body:
     border = False
     border_cnt = 0
     colliding = 0
+    MAX_HISTORY_SIZE = 600
     circle_history = []
     handle = CircleHandle()
+
+    def add_to_history(self, new_value):
+        """
+        This function adds a new value to the circle_history list,
+        keeping only the most recent MAX_HISTORY_SIZE elements.
+
+        Args:
+            circle_history: A list containing the circle history.
+            new_value: The new value to add to the history.
+
+        Returns:
+            The updated circle_history list.
+        """
+        self.circle_history.append(new_value)  # Add the new value
+        tmp = self.circle_history[-self.MAX_HISTORY_SIZE:]  # Return only the most recent elements
+        self.circle_history = tmp
+
 
     def clear_trajectory(self):
         print("Clearing trjectory")
@@ -99,13 +117,19 @@ class Body:
     def draw(self):
         pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
         
-        for (x, y) in self.circle_history:
+        for i in range(len(self.circle_history)-1):
             trail_c = self.color
+            
+            x = self.circle_history[i][0]
+            y = self.circle_history[i][1]
+            
+            nx = self.circle_history[i+1][0]
+            ny = self.circle_history[i+1][1]
             
             if(point_dist(x, y, self.x, self.y) < self.radius):
                 trail_c = (70, 70, 70)
                 
-            pygame.draw.circle(screen, trail_c, (x, y), 1)
+            pygame.draw.line(screen, trail_c, (x, y), (nx, ny), 1)
         
         text = (
             "vx"
@@ -147,7 +171,7 @@ class Body:
 
         mypos = (self.x, self.y)
         #print("center", mypos, "opposite", opposite)
-        self.circle_history.append(mypos)
+        self.add_to_history(mypos)
         
         b.x += b.vx * TIMESTEP
         b.y += b.vy * TIMESTEP

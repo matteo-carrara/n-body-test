@@ -71,7 +71,7 @@ def mainloop():
                     
                     shared_list.get(elem_idx).accel(acc[0]*TIMESTEP, acc[1]*TIMESTEP)
                     
-                    shared_list.get(elem_idx).clear_trajectory()
+                    #shared_list.get(elem_idx).clear_trajectory()
                 
                     
                 mouse_data = []
@@ -79,7 +79,7 @@ def mainloop():
                 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 is_button_held = True
-                control_queue.put("paused")
+                #control_queue.put("paused")
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 print(mouse_x, mouse_y)
                 
