@@ -1,4 +1,5 @@
 from globals import *
+from body import *
 
 def calculate_collision_velocities(
     mass1, mass2, velocity1x, velocity1y, velocity2x, velocity2y
@@ -102,123 +103,6 @@ def calculate_kinetic_energy(masses, velocities):
   return kinetic_energies
 
 
-class Body:
-    coll_distance = {}  # first the index, then the distance
-    skip = False
-    mass = 0
-    vx = 0
-    vy = 0
-    border = False
-    border_cnt = 0
-    colliding = 0
-
-    def accel(self, ax, ay):
-        if (self.colliding == 0):
-            self.vx += ax
-            self.vy += ay
-        else:
-            #print("Colliding, skipping")
-            pass
-
-    def __init__(self, radius, x, y, color=WHITE) -> None:
-        self.radius = radius
-        self.rad = radius
-        self.color = color
-
-        if x < radius:
-            x = radius
-
-        if y < radius:
-            y = radius
-
-        if x > screen_width:
-            x = screen_width
-
-        if y > screen_height:
-            y = screen_height
-
-        self.x = x
-        self.y = y
-
-    def look_result(self, times):
-        self.border_cnt = times
-
-    def draw(self):
-        pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
-        text = (
-            "vx"
-            + f"{self.vx:.1f}"
-            + " vy"
-            + f"{self.vy:.1f}"
-        )
-
-        text_surface = font.render(text, True, RED)
-        screen.blit(text_surface, (self.x, self.y))
-
-        if self.border_cnt > 0:
-            self.border_cnt -= 1
-            ##print("x,y", self.x, self.y)
-            # input()
-
-    def skip_update(self):
-        self.skip = True
-
-    def step_back(self):
-        self.x = self.old_x
-        self.y = self.old_y
-
-    def update_pos(self):
-        if self.skip == True:
-            self.skip = False
-            return
-
-        b = self
-
-        if len(self.coll_distance.keys()) > 0:
-            # ##print("WARNING THIS OBJECT COLLIDED")
-            pass
-
-        self.old_x = self.x
-        self.old_y = self.y
-
-        b.x += b.vx * TIMESTEP
-        b.y += b.vy * TIMESTEP
-
-        if b.x > screen_width - b.rad:
-            ##print("X COLLISION", b.x)
-            b.x = (screen_width - b.rad) - (b.x - (screen_width - b.rad))
-            b.vx = -b.vx
-
-            # input()
-            self.look_result(3)
-        if b.x < b.rad:
-            ##print("X COLLISION", b.x)
-            b.x = b.rad + abs(b.x - b.rad)
-            b.vx = -b.vx
-
-            # input()
-            self.look_result(3)
-        if b.y > screen_height - b.rad:
-            ##print("Y COLLISION", b.y)
-            b.y = (screen_height - b.rad) - (b.y - (screen_height - b.rad))
-            b.vy = -b.vy
-
-            # input()
-            self.look_result(3)
-        if b.y < b.rad:
-            ##print("Y COLLISION", b.y)
-            b.y = b.rad + (b.rad - b.y)
-            b.vy = -b.vy
-
-            # input()
-            self.look_result(3)
-
-    def look_newpos(self):
-        if self.border:
-            # input()
-            self.border = False
-
-
 def do_not_overlap(p1, p2, r1, r2):
     """
     This function checks if two circles do not overlap.
@@ -304,19 +188,17 @@ def create_bodies(num):
 
 
 def calc_forces(b):
-    for i in range(len(b)):
-        #print("\n\nUsing elem", i)
-        #print("Mass", b[i].mass, "Center", b[i].x, b[i].y)
 
+        
+    for i in range(len(b)):
+        if (not GRAVITY_ENABLED):
+            break
+        
         for k in range(len(b)):
             if k == i:
                 continue
 
-            #print("Against", k)
-            #print("Mass", b[k].mass, "Center", b[k].x, b[k].y)
-
             d = point_dist(b[i].x, b[i].y, b[k].x, b[k].y)
-            #print("Distance", d)
 
             acc = gravitational_acceleration(
                 b[i].mass,
@@ -325,15 +207,11 @@ def calc_forces(b):
                 np.array([b[k].x, b[k].y]),
                 G,
             )
-            #print("Acceleration of body", i, acc)
 
 
             
             b[i].accel(acc[0] * TIMESTEP, acc[1] * TIMESTEP)
 
-            #print("New velocity", b[i].vx, b[i].vy)
-
-    #print("updating positions for timestep")
     for elem in b:
         elem.update_pos()
 
@@ -466,198 +344,3 @@ def univ_collision(b, ind_fixed):
     return tmplist
 
 
-def control_thread():
-    SIM_PAUSED = threading.Lock()
-    control_window = tk.Tk()
-    control_window.title("Pygame Controls")
-    tk_width=600
-    control_window.geometry(str(tk_width)+"x400")
-    
-    def pause_sim():
-        if not SIM_PAUSED.acquire(blocking=False):
-            #print("Lock is currently busy, skipping acquisition")
-            pass
-        
-        control_queue.put("paused")
-        #print("Paused = ", SIM_PAUSED)
-        
-        
-    def resume_sim():
-        try:
-            SIM_PAUSED.release()
-        except RuntimeError:
-            #print("Already unlocked")
-            pass
-        control_queue.put("resume")
-        #print("Paused = ", SIM_PAUSED)
-        
-
-    
-    button1 = tk.Button(control_window, text="||", width=5, height=2, font=("Arial", 16), bg="blue", fg="white", command=pause_sim)
-    button1.grid(row=0, column=1)  # Place the button at row 0, column 1
-    
-    button2 = tk.Button(control_window, text=">", width=5, height=2, font=("Arial", 16), bg="blue", fg="white", command=resume_sim)
-    button2.grid(row=0, column=2)  # Place the button at row 0, column 1
-
-    entries = []
-    
-    def univ_modified(row, col):
-        newdata = entries[row][col].get()
-        print("Modified", row, col, newdata)
-        
-        if(col == 0):
-            b[row-1].x = float(newdata)
-        elif(col == 1):
-            b[row-1].y = float(newdata)
-        elif(col == 2):
-            b[row-1].vx = float(newdata)
-        elif(col == 3):
-            b[row-1].vy = float(newdata)
-        elif(col == 4):
-            b[row-1].mass = float(newdata)
-        elif(col == 5):
-            b[row-1].radius = float(newdata)
-        
-
-    data = ["X", "Y", "vx", "vy", "m", "rad"]
-    
-    
-    rows = BODIES_GEN+1
-    cols = len(data)
-    print("cols", cols)
-    ideal_cell_width = ((tk_width + 100) // cols) // 10
-    print(ideal_cell_width)
-    
-    
-    for i in range(rows):
-        tmp = []
-        
-        for j in range(cols):
-            entry = tk.Entry(control_window, width=ideal_cell_width)
-            entry.grid(row=i+1, column=j)
-            entry.config(state="normal")
-            entry.insert(0, "")
-            tmp.append(entry)
-            # Bind function to update data on edit
-            if(i>0):
-                entry.bind("<Return>", lambda event, row=i, col=j: univ_modified(row, col))
-        
-        entries.append(tmp)
-            
-    
-    
-    for i in range(cols):
-        entries[0][i].insert(0, data[i])
-        
-    # Function to update cell value
-    def update_cell(row, col, value):
-        entries[row][col].delete(0, tk.END)
-        entries[row][col].insert(0, value)
-        
-    def update_table():
-        #print("update table")
-        #print("Paused = ", SIM_PAUSED)
-        
-        row = 1
-        for body in b:
-            tmp = [round(body.x, 0), round(body.y,0), round(body.vx,1), round(body.vy,1), "{:.1e}".format(body.mass), round(body.radius, 1)]
-            for col in range(len(tmp)):
-                update_cell(row, col, tmp[col])
-            row +=1
-
-    while not tk_terminate.is_set():
-        tk_terminate.wait(timeout=0.0)
-        
-        
-
-        if not SIM_PAUSED.acquire(blocking=False):
-            #print("Lock is currently busy, skipping acquisition")
-            pass
-        else:
-            #print("Lock acquired, updating table")
-            update_table()
-            SIM_PAUSED.release()
-            #print("Lock released table updated")
-
-    
-        
-        
-        
-
-        control_window.update()
-    
-
-    control_window.destroy()
-
-    
-
-    control_window.mainloop()
-
-
-def mainloop():
-    clock = pygame.time.Clock()
-    ct = threading.Thread(target=control_thread)
-    ct.start()
-
-    
-    
-    def pygame_termination_handler(sig, frame):
-        global tk_terminate, pygame_terminate
-        tk_terminate.set()  # Assuming you have a threading.Event object
-        pygame_terminate = True  # Flag for the Pygame thread
-        print("Setting tk_terminate", tk_terminate.is_set())
-        
-    signal.signal(signal.SIGINT, pygame_termination_handler)
-
-
-    global b
-    b = create_bodies(BODIES_GEN)
-
-
-    running = True
-    i = 0
-    tmp = []
-
-    masses = [x.mass for x in b]
-    new_calc = True
-
-    global pygame_terminate
-    while not pygame_terminate:
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                pygame_terminate = True
-
-
-
-        screen.fill(BLACK)
-
-        for elem in b:
-            elem.draw()
-
-        pygame.display.flip()
-
-        clock.tick(60)
-
-
-        
-        try:
-            item = control_queue.get(block=False)
-            if(item == "paused"):
-                new_calc = False
-                print("Pausing")
-            elif(item == "resume"):
-                new_calc = True
-                print("Resuming")
-            # Process the item:
-        except queue.Empty:
-            # Handle the case where the queue is empty (optional)
-            pass
-        
-        if(new_calc):
-            calc_forces(b)
-            tmp = univ_collision(b, tmp)
-
-
-    pygame.quit()
