@@ -1,3 +1,5 @@
+print("The program is loading please wait...\n\n\n")
+
 from globals import *
 from body import *
 from func import *
