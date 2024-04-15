@@ -42,13 +42,46 @@ def mainloop():
         print("Warning gravity not enabled")
         
     global pygame_terminate
+    is_button_held = False
+    elem_clicked = False
+    elem_idx = -1
     while not pygame_terminate:
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
                 pygame_terminate = True
-
+                
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                is_button_held = True
+                control_queue.put("paused")
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                print(mouse_x, mouse_y)
+                
+                for i in range(shared_list.size()):
+                    test = is_click_in_circle(mouse_x, mouse_y, shared_list.get(i).x, shared_list.get(i).y, shared_list.get(i).radius)
+                    print("Elem ",i,"clicked?", test)
+                    if(test):
+                        elem_clicked = True
+                        elem_idx = i
+            
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                is_button_held = False
+                print("Released")
+                shared_list.get(elem_idx).clear_trajectory()
+                control_queue.put("resume")
+                
+            if event.type == pygame.MOUSEMOTION and is_button_held:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                if(elem_clicked):
+                    print("Dragging", elem_idx)
+                    shared_list.get(elem_idx).x = mouse_x
+                    shared_list.get(elem_idx).y = mouse_y
+                    pass
+                else:
+                   # print("Draggin nothing")
+                   pass
+                
 
 
         screen.fill(BLACK)

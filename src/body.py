@@ -1,5 +1,43 @@
 from globals import *
 
+
+class CircleHandle:
+    def __init__(self):
+        pass  # No attributes initialized here
+
+    def draw(self, surface, center, radius, handle_offset, handle_radius, handle_color, line_color, line_thickness):
+        self.center = center
+        self.radius = radius
+        self.handle_offset = handle_offset  # Distance of handle from center
+        self.handle_radius = handle_radius
+        self.handle_color = handle_color
+        self.line_color = line_color
+        self.line_thickness = line_thickness
+
+        # Calculate handle position based on offset and direction (optional)
+        handle_direction = (1, 0)  # Adjust for desired direction (e.g., up: (0, -1))
+        handle_pos = (
+            self.center[0] + handle_direction[0] * (self.radius + self.handle_offset),
+            self.center[1] + handle_direction[1] * (self.radius + self.handle_offset)
+        )
+
+        # Draw handle circle and connecting line
+        pygame.draw.circle(surface, handle_color, handle_pos, handle_radius)
+        pygame.draw.line(
+            surface, line_color, self.center, handle_pos, line_thickness
+        )
+
+    def is_clicked(self, mouse_pos):
+        # Check collision with handle circle (consider handle_radius)
+        handle_pos = (
+            self.center[0] + self.handle_direction[0] * (self.radius + self.handle_offset),
+            self.center[1] + self.handle_direction[1] * (self.radius + self.handle_offset)
+        )
+        distance = ((mouse_pos[0] - handle_pos[0])**2 + (mouse_pos[1] - handle_pos[1])**2)**0.5
+        return distance <= self.handle_radius
+
+
+
 class Body:
     coll_distance = {}  # first the index, then the distance
     skip = False
@@ -10,6 +48,7 @@ class Body:
     border_cnt = 0
     colliding = 0
     circle_history = []
+    handle = CircleHandle()
 
     def clear_trajectory(self):
         print("Clearing trjectory")
@@ -25,6 +64,7 @@ class Body:
             pass
 
     def __init__(self, radius, x, y, color=WHITE) -> None:
+        
         self.radius = radius
         self.rad = radius
         self.color = color
@@ -49,6 +89,7 @@ class Body:
 
     def draw(self):
         pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
+        #self.handle.draw(screen, (self.x, self.y), 100, 200, 10, WHITE, WHITE, 2)
         text = (
             "vx"
             + f"{self.vx:.1f}"

@@ -344,3 +344,22 @@ def univ_collision(b, ind_fixed):
     return tmplist
 
 
+def is_click_in_circle(mouse_x, mouse_y, center_x, center_y, radius):
+    """
+    Checks if a mouse click at (mouse_x, mouse_y) is within a circle centered at (center_x, center_y) with radius 'radius'.
+
+    Args:
+        mouse_x: X-coordinate of the mouse click.
+        mouse_y: Y-coordinate of the mouse click.
+        center_x: X-coordinate of the circle's center.
+        center_y: Y-coordinate of the circle's center.
+        radius: Radius of the circle.
+
+    Returns:
+        True if the click is within the circle, False otherwise.
+    """
+    # Calculate distance between click and center
+    distance = ((mouse_x - center_x) ** 2 + (mouse_y - center_y) ** 2) ** 0.5
+
+    # Check if distance is less than or equal to radius
+    return distance <= radius
