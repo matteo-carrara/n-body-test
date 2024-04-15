@@ -9,6 +9,12 @@ class Body:
     border = False
     border_cnt = 0
     colliding = 0
+    circle_history = []
+
+    def clear_trajectory(self):
+        print("Clearing trjectory")
+        self.circle_history = []
+        
 
     def accel(self, ax, ay):
         if (self.colliding == 0):
@@ -49,6 +55,9 @@ class Body:
             + " vy"
             + f"{self.vy:.1f}"
         )
+        
+        for (x, y) in self.circle_history:
+            pygame.draw.circle(screen, RED, (x, y), 1)
 
         text_surface = font.render(text, True, RED)
         screen.blit(text_surface, (self.x, self.y))
@@ -79,6 +88,8 @@ class Body:
         self.old_x = self.x
         self.old_y = self.y
 
+        self.circle_history.append((self.x, self.y))
+        
         b.x += b.vx * TIMESTEP
         b.y += b.vy * TIMESTEP
 

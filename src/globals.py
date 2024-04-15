@@ -21,6 +21,7 @@ screen_height = 900
 
 TIMESTEP = 0.0064
 BODIES_GEN = 2
+GRAVITY_ENABLED = True
 
 b = []
 control_queue = queue.Queue()
@@ -31,4 +32,3 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 font = pygame.font.Font(None, 32)
 pygame_terminate = False
 
-GRAVITY_ENABLED = False

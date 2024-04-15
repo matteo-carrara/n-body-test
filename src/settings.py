@@ -21,7 +21,7 @@ def control_thread(shared_list):
     my_label.grid(row=2+shared_list.size(), column=1)
 
     def set_label_running():
-        my_label.config(text="Pause to change values", bg="yellow", font=("normal",))
+        my_label.config(text="PAUSE TO CHANGE VALUES", bg="yellow", font=("normal",))
     
     set_label_running()
         
@@ -63,8 +63,10 @@ def control_thread(shared_list):
         
         if(col == 0):
             shared_list.get(row-1).x = float(newdata)
+            shared_list.get(row-1).clear_trajectory()
         elif(col == 1):
             shared_list.get(row-1).y = float(newdata)
+            shared_list.get(row-1).clear_trajectory()
         elif(col == 2):
             shared_list.get(row-1).vx = float(newdata)
         elif(col == 3):
@@ -73,6 +75,11 @@ def control_thread(shared_list):
             shared_list.get(row-1).mass = float(newdata)
         elif(col == 5):
             shared_list.get(row-1).radius = float(newdata)
+        else:
+            print("BUGED VALUE")
+            return
+        
+        
         
 
     data = ["X", "Y", "vx", "vy", "m", "rad"]
