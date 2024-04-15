@@ -22,6 +22,7 @@ screen_height = 900
 TIMESTEP = 0.0064
 BODIES_GEN = 2
 GRAVITY_ENABLED = True
+UNIV_BORDERS = False
 
 
 b = []

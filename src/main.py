@@ -64,13 +64,13 @@ def mainloop():
                 
                 if(moving_space):
                     moving_space = False
-                    print("Started moving at", start_moving_space)
+                    #print("Started moving at", start_moving_space)
                     
                     now = pygame.mouse.get_pos()
-                    print("End at", now)
+                    #print("End at", now)
                     
                     total_xy_off = (total_xy_off[0]-(start_moving_space[0]-now[0]), total_xy_off[1]-(start_moving_space[1]-now[1]))
-                    print("Offset", total_xy_off)
+                    #print("Offset", total_xy_off)
                 
                 if(elem_clicked):
                     elem_clicked = False
@@ -92,17 +92,20 @@ def mainloop():
                 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 is_button_held = True
+                
                 control_queue.put("paused")
                 mouse_x, mouse_y = pygame.mouse.get_pos()
-                print(mouse_x, mouse_y)
+                print("Clicked", mouse_x, mouse_y)
+                print("Adjusted click", mouse_x-total_xy_off[0], mouse_y-total_xy_off[1])
                 
                 for i in range(shared_list.size()):
-                    test = is_click_in_circle(mouse_x, mouse_y, shared_list.get(i).x, shared_list.get(i).y, shared_list.get(i).radius)
+                    test = is_click_in_circle(mouse_x-total_xy_off[0], mouse_y-total_xy_off[1], shared_list.get(i).x, shared_list.get(i).y, shared_list.get(i).radius)
                     #print("Elem ",i,"clicked?", test)
                     if(test):
                         elem_clicked = True
                         elem_idx = i
-                        
+                
+                print("Elem clicked = ", elem_clicked)        
                 if (not elem_clicked):
                     moving_space = True
                     start_moving_space = pygame.mouse.get_pos()
@@ -113,8 +116,8 @@ def mainloop():
                 
                 if(elem_clicked):
                     #print("Dragging", elem_idx)
-                    shared_list.get(elem_idx).x = mouse_x
-                    shared_list.get(elem_idx).y = mouse_y
+                    shared_list.get(elem_idx).x = mouse_x-total_xy_off[0]
+                    shared_list.get(elem_idx).y =  mouse_y-total_xy_off[1]
                     pass
                 else:
                    # print("Draggin nothing")
@@ -137,10 +140,10 @@ def mainloop():
             item = control_queue.get(block=False)
             if(item == "paused"):
                 new_calc = False
-                print("Pausing")
+                #print("Pausing")
             elif(item == "resume"):
                 new_calc = True
-                print("Resuming")
+                #print("Resuming")
             # Process the item:
         except queue.Empty:
             # Handle the case where the queue is empty (optional)

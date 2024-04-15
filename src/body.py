@@ -176,34 +176,35 @@ class Body:
         b.x += b.vx * TIMESTEP
         b.y += b.vy * TIMESTEP
 
-        if b.x > screen_width - b.rad:
-            ##print("X COLLISION", b.x)
-            b.x = (screen_width - b.rad) - (b.x - (screen_width - b.rad))
-            b.vx = -b.vx
+        if(UNIV_BORDERS):
+            if b.x > screen_width - b.rad:
+                ##print("X COLLISION", b.x)
+                b.x = (screen_width - b.rad) - (b.x - (screen_width - b.rad))
+                b.vx = -b.vx
 
-            # input()
-            self.look_result(3)
-        if b.x < b.rad:
-            ##print("X COLLISION", b.x)
-            b.x = b.rad + abs(b.x - b.rad)
-            b.vx = -b.vx
+                # input()
+                self.look_result(3)
+            if b.x < b.rad:
+                ##print("X COLLISION", b.x)
+                b.x = b.rad + abs(b.x - b.rad)
+                b.vx = -b.vx
 
-            # input()
-            self.look_result(3)
-        if b.y > screen_height - b.rad:
-            ##print("Y COLLISION", b.y)
-            b.y = (screen_height - b.rad) - (b.y - (screen_height - b.rad))
-            b.vy = -b.vy
+                # input()
+                self.look_result(3)
+            if b.y > screen_height - b.rad:
+                ##print("Y COLLISION", b.y)
+                b.y = (screen_height - b.rad) - (b.y - (screen_height - b.rad))
+                b.vy = -b.vy
 
-            # input()
-            self.look_result(3)
-        if b.y < b.rad:
-            ##print("Y COLLISION", b.y)
-            b.y = b.rad + (b.rad - b.y)
-            b.vy = -b.vy
+                # input()
+                self.look_result(3)
+            if b.y < b.rad:
+                ##print("Y COLLISION", b.y)
+                b.y = b.rad + (b.rad - b.y)
+                b.vy = -b.vy
 
-            # input()
-            self.look_result(3)
+                # input()
+                self.look_result(3)
 
     def look_newpos(self):
         if self.border:
