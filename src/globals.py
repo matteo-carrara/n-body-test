@@ -20,9 +20,9 @@ screen_width = 1600
 screen_height = 900
 
 TIMESTEP = 0.0064
-BODIES_GEN = 5
+BODIES_GEN = 2
 GRAVITY_ENABLED = True
-MAX_HISTORY_SIZE = 10
+
 
 b = []
 control_queue = queue.Queue()
