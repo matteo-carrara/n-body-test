@@ -10,10 +10,22 @@ def control_thread(shared_list):
         print(shared_list.get(i))
     
     SIM_PAUSED = threading.Lock()
+    
     control_window = tk.Tk()
     control_window.title("Pygame Controls")
     tk_width=600
     control_window.geometry(str(tk_width)+"x400")
+    
+    
+    my_label = tk.Label(control_window)
+    my_label.grid(row=2+shared_list.size(), column=1)
+
+    def set_label_running():
+        my_label.config(text="Pause to change values", bg="yellow", font=("normal",))
+    
+    set_label_running()
+        
+    
     
     def pause_sim():
         if not SIM_PAUSED.acquire(blocking=False):
@@ -21,9 +33,10 @@ def control_thread(shared_list):
             pass
         
         control_queue.put("paused")
+        my_label.config(text="SIM PAUSED", bg="red", font=("bold",))
         #print("Paused = ", SIM_PAUSED)
         
-        
+
     def resume_sim():
         try:
             SIM_PAUSED.release()
@@ -31,6 +44,7 @@ def control_thread(shared_list):
             #print("Already unlocked")
             pass
         control_queue.put("resume")
+        set_label_running()
         #print("Paused = ", SIM_PAUSED)
         
 
