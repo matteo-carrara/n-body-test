@@ -45,12 +45,40 @@ def mainloop():
     is_button_held = False
     elem_clicked = False
     elem_idx = -1
+    mouse_data = []
+    
     while not pygame_terminate:
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
                 pygame_terminate = True
+
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                is_button_held = False
+                #print("Released")
+                
+                
+                if(elem_clicked):
+                    
+                    
+                    
+                    #print("USING ACC = ", acc)
+                    shared_list.get(elem_idx).clear_trajectory()
+                    
+                    shared_list.get(elem_idx).vx = 0
+                    shared_list.get(elem_idx).vy = 0
+                    
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    mouse_data.append({'x': mouse_x, 'y': mouse_y, 'timestamp': time.time()})
+                    
+                    acc = [k * 2 for k in get_drag_acceleration(mouse_data, 3000)]
+                    
+                    shared_list.get(elem_idx).accel(acc[0]*TIMESTEP, acc[1]*TIMESTEP)
+                
+                    
+                mouse_data = []
+                control_queue.put("resume")
                 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 is_button_held = True
@@ -60,21 +88,16 @@ def mainloop():
                 
                 for i in range(shared_list.size()):
                     test = is_click_in_circle(mouse_x, mouse_y, shared_list.get(i).x, shared_list.get(i).y, shared_list.get(i).radius)
-                    print("Elem ",i,"clicked?", test)
+                    #print("Elem ",i,"clicked?", test)
                     if(test):
                         elem_clicked = True
                         elem_idx = i
             
-            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                is_button_held = False
-                print("Released")
-                shared_list.get(elem_idx).clear_trajectory()
-                control_queue.put("resume")
-                
             if event.type == pygame.MOUSEMOTION and is_button_held:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 if(elem_clicked):
-                    print("Dragging", elem_idx)
+                    #print("Dragging", elem_idx)
+                    mouse_data.append({'x': mouse_x, 'y': mouse_y, 'timestamp': time.time()})
                     shared_list.get(elem_idx).x = mouse_x
                     shared_list.get(elem_idx).y = mouse_y
                     pass

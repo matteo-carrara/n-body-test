@@ -363,3 +363,101 @@ def is_click_in_circle(mouse_x, mouse_y, center_x, center_y, radius):
 
     # Check if distance is less than or equal to radius
     return distance <= radius
+
+def smooth_mouse_data(mouse_data, window_size):
+    """
+    Applies a simple moving average filter to smooth mouse movement data.
+
+    Args:
+        mouse_data: A list of dictionaries containing mouse position and timestamp.
+            Each dictionary should have keys 'x', 'y', and 'timestamp'.
+        window_size: The size of the smoothing window (number of samples to average).
+
+    Returns:
+        A new list of dictionaries with smoothed X and Y positions.
+    """
+
+    if len(mouse_data) < window_size:
+        return mouse_data  # Not enough data for smoothing
+
+    smoothed_data = []
+    for i in range(len(mouse_data)):
+        # Get window of data (consider edge cases)
+        start_index = max(0, i - window_size + 1)
+        window_data = mouse_data[start_index : i + 1]
+
+        # Calculate average X and Y positions within the window
+        average_x = sum(sample["x"] for sample in window_data) / len(window_data)
+        average_y = sum(sample["y"] for sample in window_data) / len(window_data)
+
+        # Create new entry with smoothed positions and original timestamp
+        smoothed_data.append(
+            {"x": average_x, "y": average_y, "timestamp": mouse_data[i]["timestamp"]}
+        )
+
+    return smoothed_data
+
+
+def get_drag_acceleration(raw_mouse_data, max_acceleration):
+    """
+    Calculates acceleration based on a list of historical mouse movements.
+
+    Args:
+        mouse_data: A list of dictionaries containing mouse position and timestamp.
+            Each dictionary should have keys 'x', 'y', and 'timestamp'.
+        max_acceleration: Maximum acceleration limit (positive value).
+
+    Returns:
+        A tuple containing the final X and Y acceleration values.
+    """
+
+    if len(raw_mouse_data) < 4:
+        print("Missing data")
+        return 0, 0  # Not enough data for acceleration
+    
+    mouse_data = smooth_mouse_data(raw_mouse_data, 4)
+
+    print("len mouse data", len(mouse_data), "raw data", len(raw_mouse_data))
+
+    # Get recent samples (consider adjusting window size)
+    window_size = 5  # Experiment with this value for smoothness
+    
+    if(window_size >= len(mouse_data)):
+        window_size = len(mouse_data)
+        
+    recent_data = mouse_data[-window_size:]
+    print("len mouse data", len(mouse_data), "len recent data", len(recent_data))
+
+    # Calculate total time difference
+    total_time_delta = abs(recent_data[0]['timestamp'] - recent_data[-1]['timestamp'])
+    #print("Times", recent_data[0]['timestamp'], recent_data[-1]['timestamp'])
+    #print("Time delta", total_time_delta)
+    if total_time_delta <= 0:
+        print("Time delta 0")
+        return 0, 0  # No time difference
+        
+
+    # Calculate average movement (delta)
+    average_delta_x = 0
+    average_delta_y = 0
+    for i in range(1, len(recent_data)):
+        delta_x = recent_data[i]['x'] - recent_data[i - 1]['x']
+        delta_y = recent_data[i]['y'] - recent_data[i - 1]['y']
+        average_delta_x += delta_x
+        average_delta_y += delta_y
+
+    average_delta_x /= (window_size - 1)
+    average_delta_y /= (window_size - 1)
+
+    # Normalize movement vector (avoid division by zero)
+    if abs(average_delta_x) + abs(average_delta_y) > 0:
+        movement_norm = (average_delta_x ** 2 + average_delta_y ** 2) ** 0.5
+        average_delta_x /= movement_norm
+        average_delta_y /= movement_norm
+
+    # Scale movement to desired acceleration considering total time difference
+    acceleration_x = (average_delta_x / total_time_delta) * max_acceleration
+    acceleration_y = (average_delta_y / total_time_delta) * max_acceleration
+
+    return acceleration_x, acceleration_y
+
