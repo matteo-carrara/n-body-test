@@ -129,6 +129,8 @@ def mainloop():
 
         screen.fill(BLACK)
 
+        draw_axes(screen, screen_width, screen_height,  total_xy_off, RED)
+
         for elem in b:
             elem.draw(total_xy_off)
 

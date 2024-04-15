@@ -28,14 +28,98 @@ def calculate_collision_velocities(
     return v1fx, v1fy, v2fx, v2fy
 
 
-def point_dist(x1, y1, x2, y2):
-    # Calculate the squared difference in x and y coordinates
-    delta_x = (x2 - x1) ** 2
-    delta_y = (y2 - y1) ** 2
 
-    # Apply the Pythagorean theorem and return the distance
-    distance = math.sqrt(delta_x + delta_y)
-    return distance
+
+def draw_axes(screen, width, height, offset, color=(0, 0, 0), tick_size=20, label_distance=15):
+    """
+    Draws X and Y axes with tickmarks, numbers, and arrows on the Pygame screen.
+
+    Args:
+        screen: The Pygame screen surface.
+        width: The width of the screen.
+        height: The height of the screen.
+        color: The color of the axes (default black).
+        tick_size: The size of the tick marks (default 10 pixels).
+        label_distance: The distance between the axis and the labels (default 5 pixels).
+    """
+    # Draw X-axis
+    #print("Height",  height // 2)
+    pygame.draw.line(screen, color,
+                     (0, int((height // 2)+offset[1])),
+                     (width,int((height // 2)+offset[1])),
+                    2)
+
+    # Draw Y-axis
+    pygame.draw.line(screen, color,
+                     ( int((width // 2)+offset[0]), 0),
+                     (int((width // 2)+offset[0]), height),
+                    2)
+
+    tickmarks = False
+    # Draw tick marks and labels on X-axis
+    for i in range(1, width // tick_size + 1):
+        if(not tickmarks):
+            break 
+        
+        x = i * tick_size
+        pygame.draw.line(
+            screen,
+            color,
+            (x, height // 2 - tick_size // 2),
+            (x, height // 2 + tick_size // 2),
+            1,
+        )
+        
+        # Draw label (avoid drawing at the end)
+        if i != width // tick_size:
+            label_surface = pygame.font.Font(None, 15).render(
+                str(i * tick_size), True, color
+            )
+            screen.blit(
+                label_surface,
+                (x - label_surface.get_width() // 2, height // 2 + label_distance),
+            )
+
+    # Draw tick marks and labels on Y-axis
+    for i in range(1, height // tick_size + 1):
+        if(not tickmarks):
+            break
+
+        y = i * tick_size
+        pygame.draw.line(
+            screen,
+            color,
+            (width // 2 - tick_size // 2, y),
+            (width // 2 + tick_size // 2, y),
+            1,
+        )
+        # Draw label (avoid drawing at the end)
+        if i != height // tick_size:
+            label_surface = pygame.font.Font(None, 15).render(
+                str(i * tick_size), True, color
+            )
+            screen.blit(
+                label_surface,
+                (
+                    width // 2 - label_surface.get_width() - label_distance,
+                    y - label_surface.get_height() // 2,
+                ),
+            )
+
+    # Draw arrows at the end of axes
+    arrow_size = 10
+    pygame.draw.polygon(
+        screen,
+        color,
+        [
+            (width - arrow_size, height // 2 - arrow_size // 2),
+            (width, height // 2),
+            (width - arrow_size, height // 2 + arrow_size // 2),
+        ],
+        2,
+    )
+
+
 
 
 def gravitational_acceleration(
