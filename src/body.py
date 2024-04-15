@@ -114,19 +114,19 @@ class Body:
         self.border_cnt = times
 
 
-    def draw(self):
-        pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
+    def draw(self, off):
+        pygame.draw.circle(screen, self.color, (self.x+off[0], self.y+off[1]), self.radius)
         
         for i in range(len(self.circle_history)-1):
             trail_c = self.color
             
-            x = self.circle_history[i][0]
-            y = self.circle_history[i][1]
+            x = self.circle_history[i][0]+off[0]
+            y = self.circle_history[i][1]+off[1]
             
-            nx = self.circle_history[i+1][0]
-            ny = self.circle_history[i+1][1]
+            nx = self.circle_history[i+1][0]+off[0]
+            ny = self.circle_history[i+1][1]+off[1]
             
-            if(point_dist(x, y, self.x, self.y) < self.radius):
+            if(point_dist(x, y, self.x+off[0], self.y+off[1]) < self.radius):
                 trail_c = (70, 70, 70)
                 
             pygame.draw.line(screen, trail_c, (x, y), (nx, ny), 1)
@@ -141,7 +141,7 @@ class Body:
 
 
         text_surface = font.render(text, True, RED)
-        screen.blit(text_surface, (self.x, self.y))
+        screen.blit(text_surface, (self.x+off[0], self.y+off[1]))
 
         if self.border_cnt > 0:
             self.border_cnt -= 1

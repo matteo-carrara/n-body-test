@@ -47,6 +47,9 @@ def mainloop():
     elem_clicked = False
     elem_idx = -1
     mouse_data = []
+    moving_space = False
+    start_moving_space = (0,0)
+    total_xy_off = (0,0)
     
     while not pygame_terminate:
 
@@ -59,15 +62,25 @@ def mainloop():
                 is_button_held = False
                 #print("Released")
                 
+                if(moving_space):
+                    moving_space = False
+                    print("Started moving at", start_moving_space)
+                    
+                    now = pygame.mouse.get_pos()
+                    print("End at", now)
+                    
+                    total_xy_off = (total_xy_off[0]-(start_moving_space[0]-now[0]), total_xy_off[1]-(start_moving_space[1]-now[1]))
+                    print("Offset", total_xy_off)
                 
                 if(elem_clicked):
+                    elem_clicked = False
                     shared_list.get(elem_idx).vx = 0
                     shared_list.get(elem_idx).vy = 0
                     
                     mouse_x, mouse_y = pygame.mouse.get_pos()
                     mouse_data.append({'x': mouse_x, 'y': mouse_y, 'timestamp': time.time()})
                     
-                    acc = [k * 1.5 for k in get_drag_acceleration(mouse_data, 3000)]
+                    acc = [k * 1 for k in get_drag_acceleration(mouse_data, 3000)]
                     
                     shared_list.get(elem_idx).accel(acc[0]*TIMESTEP, acc[1]*TIMESTEP)
                     
@@ -89,12 +102,17 @@ def mainloop():
                     if(test):
                         elem_clicked = True
                         elem_idx = i
+                        
+                if (not elem_clicked):
+                    moving_space = True
+                    start_moving_space = pygame.mouse.get_pos()
             
             if event.type == pygame.MOUSEMOTION and is_button_held:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
+                mouse_data.append({'x': mouse_x, 'y': mouse_y, 'timestamp': time.time()})
+                
                 if(elem_clicked):
                     #print("Dragging", elem_idx)
-                    mouse_data.append({'x': mouse_x, 'y': mouse_y, 'timestamp': time.time()})
                     shared_list.get(elem_idx).x = mouse_x
                     shared_list.get(elem_idx).y = mouse_y
                     pass
@@ -107,7 +125,7 @@ def mainloop():
         screen.fill(BLACK)
 
         for elem in b:
-            elem.draw()
+            elem.draw(total_xy_off)
 
         pygame.display.flip()
 
