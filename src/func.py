@@ -1,6 +1,111 @@
 from globals import *
 from body import *
 
+import numpy as np
+from math import pow
+
+def ke(m, vx, vy):
+    #print("KE CALCULATING WITH m", m, "vx", vx, "vy", vy)
+    return 1/2*m*(pow(vx,2) + pow(vy,2))
+
+
+def elastic_collision_2d(m1, v1x, v1y, m2, v2x, v2y):
+    """
+    Calculates the final velocities after an elastic collision in 2D.
+
+    Args:
+        m1 (float): Mass of the first object.
+        v1x (float): Initial x-velocity of the first object.
+        v1y (float): Initial y-velocity of the first object.
+        m2 (float): Mass of the second object.
+        v2x (float): Initial x-velocity of the second object.
+        v2y (float): Initial y-velocity of the second object.
+
+    Returns:
+        tuple: A tuple containing the final x and y velocities of both objects (v1fx, v1fy, v2fx, v2fy).
+    """
+
+    # Combined momentum in x and y directions
+    p_x = m1 * v1x + m2 * v2x
+    p_y = m1 * v1y + m2 * v2y
+
+    # Apply conservation of momentum to find final velocities
+    v1fx = (p_x - m2 * v2x) / (m1 + m2)
+    v1fy = (p_y - m2 * v2y) / (m1 + m2)
+    v2fx = (p_x + m1 * v1x) / (m1 + m2)
+    v2fy = (p_y + m1 * v1y) / (m1 + m2)
+
+    return v1fx, v1fy, v2fx, v2fy
+
+
+def get_velocity(m, E_k, vx_sample=0.0, vy_sample=0.0):
+    """
+    This function calculates the velocities vx and vy of an object with mass m
+    given its expected kinetic energy E_k. It assumes equal distribution
+    of kinetic energy in the x and y directions. It also scales the output
+    velocities based on the ratio of the provided sample velocity (vx_sample, vy_sample).
+
+    Args:
+        m: mass of the object
+        E_k: expected kinetic energy of the object
+        vx_sample: sample velocity in the x direction (default: 0.0)
+        vy_sample: sample velocity in the y direction (default: 0.0)
+
+    Returns:
+        vx: scaled velocity in the x direction
+        vy: scaled velocity in the y direction
+    """
+
+    # Calculate the ideal speed based on kinetic energy
+    v_ideal = math.sqrt(2 * E_k / m)
+    total_v = vx_sample+vy_sample
+    
+    if(total_v != 0):
+        vx = vx_sample/total_v *v_ideal
+        vy = vy_sample/total_v *v_ideal
+    else:
+        vx = v_ideal /2
+        vy = v_ideal / 2
+
+    return vx, vy
+
+def elastic_collision(m1, v1x, v1y, m2, v2x, v2y):
+    """
+    This function performs an elastic collision in 2D for two points with masses and velocities.
+
+    Args:
+        m1: Mass of the first point.
+        v1x: x-component of the velocity of the first point.
+        v1y: y-component of the velocity of the first point.
+        m2: Mass of the second point.
+        v2x: x-component of the velocity of the second point.
+        v2y: y-component of the velocity of the second point.
+
+    Returns:
+        v1x_new, v1y_new, v2x_new, v2y_new: The new x and y components of the velocities for both points after the collision.
+    """
+    k1 = ke(m1, v1x, v1y)
+    k2 = ke(m2, v2x, v2y)
+    kt = k1 + k2
+    v1 = (0,)
+    v2 = v1
+
+    #print("V2", v2x, v2y, "V1", v1x, v1y)
+    if (abs(v2x)+abs(v2y))>0:
+        v1 = get_velocity(m1, k2, v2x, v2y)
+    else:
+        v1 = (0, 0)
+    
+    if (abs(v1x)+abs(v1y))>0:
+        v2 = get_velocity(m2, k1, v1x, v1y)
+    else:
+        v2 = (0, 0)
+    
+    #print("returning", v1+v2)
+    return v1+v2
+
+
+
 def calculate_collision_velocities(
     mass1, mass2, velocity1x, velocity1y, velocity2x, velocity2y
 ):
@@ -19,13 +124,22 @@ def calculate_collision_velocities(
         tuple: A tuple containing the final velocities (v1fx, v1fy, v2fx, v2fy) for body 1 and body 2 in x and y directions.
     """
 
-    # Conservation of momentum (x and y components)
-    v1fx = (mass1 * velocity1x + mass2 * velocity2x) / (mass1 + mass2)
-    v1fy = (mass1 * velocity1y + mass2 * velocity2y) / (mass1 + mass2)
-    v2fx = (mass2 * velocity2x + mass1 * velocity1x) / (mass1 + mass2)
-    v2fy = (mass2 * velocity2y + mass1 * velocity1y) / (mass1 + mass2)
+    v1fx, v1fy, v2fx, v2fy = elastic_collision(mass1, velocity1x, velocity1y, mass2, velocity2x, velocity2y)
 
+    #print("Elastic collision")
+
+    oldk = (ke(mass1, velocity1x, velocity1y), ke(mass2, velocity2x, velocity2y))
+    newk = (ke(mass1, v1fx, v1fy), ke(mass2, v2fx, v2fy))
+    
+    print("Masses", mass1, mass2, "Ratio", mass1/mass2)
+    print("Original velocity:", velocity1x, velocity1y, "/", velocity2x, velocity2y)
+    print("New values", v1fx, v1fy, "/", v2fx, v2fy)
+    print("KE before",oldk[0] , "/", oldk[1], "sum = ", sum(oldk))
+    print("KE after", newk[0]  ,"/", newk[1], "sum = ", sum(newk) )
+    #input()
+    
     return v1fx, v1fy, v2fx, v2fy
+
 
 
 
@@ -210,8 +324,8 @@ def do_not_overlap(p1, p2, r1, r2):
 def create_bodies(num):
     min_radius = 15
     max_radius = 30
-    minmass = int(1e15)
-    maxmass = int(1e16)
+    minmass = MIN_MASS
+    maxmass = MAX_MASS
     ret = []
 
     for i in range(num):
@@ -223,6 +337,10 @@ def create_bodies(num):
             random.randrange(64, 256),
             random.randrange(64, 256),
         )
+        
+        if(COLOR_PALETTE == "scientific"):
+            color = (c, c, c)
+        
 
         while not found:
             rad = random.randrange(min_radius, max_radius + 1)

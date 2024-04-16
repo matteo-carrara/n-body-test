@@ -55,7 +55,7 @@ class Body:
     border = False
     border_cnt = 0
     colliding = 0
-    MAX_HISTORY_SIZE = 600
+    MAX_HISTORY_SIZE = TRAIL_LENGHT
     circle_history = []
     handle = CircleHandle()
 
@@ -77,7 +77,7 @@ class Body:
 
 
     def clear_trajectory(self):
-        print("Clearing trjectory")
+        #print("Clearing trjectory")
         self.circle_history = []
         
 
@@ -113,23 +113,56 @@ class Body:
     def look_result(self, times):
         self.border_cnt = times
 
+    def zoom_line(self, points, factor):
+        """
+        Zooms a line defined by a list of points up or down by a factor, maintaining original position.
 
-    def draw(self, off):
-        pygame.draw.circle(screen, self.color, (self.x+off[0], self.y+off[1]), self.radius)
+        Args:
+            points: A list of tuples representing the (x, y) coordinates of the line points.
+            factor: A float value representing the zoom factor (positive for zoom in, negative for zoom out).
+
+        Returns:
+            A new list of points with the zoomed coordinates.
+        """
+        if (len(points) < 1):
+            return
         
-        for i in range(len(self.circle_history)-1):
-            trail_c = self.color
-            
-            x = self.circle_history[i][0]+off[0]
-            y = self.circle_history[i][1]+off[1]
-            
-            nx = self.circle_history[i+1][0]+off[0]
-            ny = self.circle_history[i+1][1]+off[1]
-            
-            if(point_dist(x, y, self.x+off[0], self.y+off[1]) < self.radius):
-                trail_c = (70, 70, 70)
+        # Calculate the average of all x and y coordinates
+        average_x = sum(x for x, _ in points) / len(points)
+        average_y = sum(y for _, y in points) / len(points)
+
+        zoomed_points = []
+        for point in points:
+            x, y = point
+            # Subtract the average to center the line at origin during zoom
+            centered_x = x - average_x
+            centered_y = y - average_y
+            # Apply zoom factor to the centered coordinates
+            zoomed_x = centered_x * factor
+            zoomed_y = centered_y * factor
+            # Add the average back to maintain original position
+            zoomed_point = (zoomed_x + average_x, zoomed_y + average_y)
+            zoomed_points.append(zoomed_point)
+        return zoomed_points
+
+    def draw(self, off, zoom):
+        pygame.draw.circle(screen, self.color, (self.x+off[0], self.y+off[1]), self.radius*zoom)
+        
+        scaled_history = self.zoom_line(self.circle_history, zoom)
+        if(len(self.circle_history) > 1):
+            for i in range(len(scaled_history)-1):
+                trail_c = self.color
                 
-            pygame.draw.line(screen, trail_c, (x, y), (nx, ny), 1)
+                x = scaled_history[i][0]+(off[0]*zoom)
+                y = scaled_history[i][1]+(off[1]*zoom)
+                
+                nx = scaled_history[i+1][0]+(off[0]*zoom)
+                ny = scaled_history[i+1][1]+(off[1]*zoom)
+                
+                if(point_dist(x, y, self.x+off[0], self.y+off[1]) < self.radius*zoom):
+                    trail_c = (70, 70, 70)
+                    
+                pygame.draw.line(screen, trail_c, (x, y), (nx, ny), 1)
         
         text = (
             "vx"

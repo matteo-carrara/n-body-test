@@ -5,11 +5,21 @@ from body import *
 from func import *
 from settings import *
 from shared_list import *
+import traceback
+from sys import exit
 
 
 
 def mainloop():
     clock = pygame.time.Clock()
+    shared_list = SharedList()
+    
+
+
+    args = (shared_list,)
+    ct = threading.Thread(target=control_thread, args=args)
+    ct.start()
+    
     
 
     
@@ -24,15 +34,14 @@ def mainloop():
 
 
     global b
-    shared_list = SharedList()
+    
     b = create_bodies(BODIES_GEN)
     
     for i in range(len(b)):
         b[i].clear_trajectory()
         shared_list.add(b[i])
 
-    ct = threading.Thread(target=control_thread, args=(shared_list,))
-    ct.start()
+
 
     running = True
     i = 0
@@ -52,6 +61,10 @@ def mainloop():
     moving_space = False
     start_moving_space = (0,0)
     total_xy_off = (0,0)
+    
+    mouse_wheel_factor = 2
+    current_zoom = 1
+    
     
     while not pygame_terminate:
 
@@ -97,8 +110,8 @@ def mainloop():
                 
                 control_queue.put("paused")
                 mouse_x, mouse_y = pygame.mouse.get_pos()
-                print("Clicked", mouse_x, mouse_y)
-                print("Adjusted click", mouse_x-total_xy_off[0], mouse_y-total_xy_off[1])
+                #print("Clicked", mouse_x, mouse_y)
+                #print("Adjusted click", mouse_x-total_xy_off[0], mouse_y-total_xy_off[1])
                 
                 for i in range(shared_list.size()):
                     test = is_click_in_circle(mouse_x-total_xy_off[0], mouse_y-total_xy_off[1], shared_list.get(i).x, shared_list.get(i).y, shared_list.get(i).radius)
@@ -107,7 +120,7 @@ def mainloop():
                         elem_clicked = True
                         elem_idx = i
                 
-                print("Elem clicked = ", elem_clicked)        
+                #print("Elem clicked = ", elem_clicked)        
                 if (not elem_clicked):
                     moving_space = True
                     start_moving_space = pygame.mouse.get_pos()
@@ -124,7 +137,16 @@ def mainloop():
                 else:
                    # print("Draggin nothing")
                    pass
-                
+            
+            if (event.type == pygame.MOUSEWHEEL) and ZOOM_ENABLED:
+                # Access the 'y' attribute to determine scroll direction
+                scroll_amount = event.y
+                if scroll_amount > 0:
+                    current_zoom = current_zoom * mouse_wheel_factor
+                    print("Scrolling up", current_zoom)
+                elif scroll_amount < 0:
+                    current_zoom = current_zoom / mouse_wheel_factor
+                    print("Scrolling Down", current_zoom)
 
 
         screen.fill(BLACK)
@@ -132,7 +154,7 @@ def mainloop():
         draw_axes(screen, screen_width, screen_height,  total_xy_off, RED)
 
         for elem in b:
-            elem.draw(total_xy_off)
+            elem.draw(total_xy_off, current_zoom)
 
         pygame.display.flip()
 
@@ -160,5 +182,11 @@ def mainloop():
 
     pygame.quit()
 
+try:
+    mainloop()
+except Exception as e:  # Catch any exception
+    print("An error occurred:", e)  # Print the exception message
+    traceback.print_exc()
 
-mainloop()
+    pygame.quit()
+    exit(1)

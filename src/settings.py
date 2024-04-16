@@ -1,14 +1,16 @@
 from globals import *
-import func
+import traceback
 
-
-
-def control_thread(shared_list):
+def settings_window(shared_list):
     global b
     
+    control_window = tk.Tk()
+    print("Putting tk window")
+    shared_tk_window.put(control_window)
+    print("Window sent")
+
     SIM_PAUSED = threading.Lock()
     
-    control_window = tk.Tk()
     control_window.title("Pygame Controls")
     tk_width=600
     control_window.geometry(str(tk_width)+"x400")
@@ -26,7 +28,7 @@ def control_thread(shared_list):
     rows = BODIES_GEN+1
     cols = len(data)
     ideal_cell_width = ((tk_width + 100) // cols) // 10
-    
+
 
     def set_label_running():
         my_label.config(text="PAUSE TO CHANGE VALUES", bg="yellow", font=("normal",))
@@ -152,3 +154,14 @@ def control_thread(shared_list):
 
     settings_mainloop()
 
+
+
+def control_thread(shared_list):
+    try:
+        settings_window(shared_list)
+
+    except Exception as e:  # Catch any exception
+        tk_window_copy = shared_tk_window.get()
+        tk_window_copy.destroy()
+        
+        raise
